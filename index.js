@@ -22,6 +22,9 @@ async function run() {
     const componentCollection = client
       .db("computerComponent")
       .collection("component");
+    const newOrderCollection = client
+      .db("computerComponent")
+      .collection("newOrder");
 
     app.get("/component", async (req, res) => {
       const query = {};
@@ -35,6 +38,12 @@ async function run() {
       const result = await componentCollection.findOne(query);
       res.send(result);
     });
+
+    app.post("/purchase", async (req, res) => {
+        const myOrder = req.body;
+        const result = await newOrderCollection.insertOne(myOrder);
+        res.send({success:result});
+      });
 
     app.put("/purchase/:id", async (req, res) => {
       const id = req.params.id;
