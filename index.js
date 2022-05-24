@@ -25,6 +25,9 @@ async function run() {
     const newOrderCollection = client
       .db("computerComponent")
       .collection("newOrder");
+    const userCollection = client
+      .db("computerComponent")
+      .collection("user");
 
     app.get("/component", async (req, res) => {
       const query = {};
@@ -32,8 +35,30 @@ async function run() {
       res.send(result);
     });
 
-    app.get('/purchase',async(req,res)=>{
-      const result = await newOrderCollection.find().toArray();
+    app.post('/users',async(req,res)=>{
+      const user = req.body;
+      // const email = req.query.email;
+      const query = {
+        email:user.email
+      };
+      const users = {
+        email:user.email,
+        name:user.name,
+        phone:user.phone
+      }
+      const exists = await newOrderCollection.findOne(query);
+      if(exists){
+        return res.send({ success: false, user: exists });
+      }
+      else{
+        const result = await userCollection.insertOne(users);
+        return res.send({ success: true, result });
+      } 
+      
+    });
+
+    app.get('/users',async(req,res)=>{
+      const result = await userCollection.find().toArray();
       res.send(result);
     })
 
