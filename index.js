@@ -46,7 +46,7 @@ async function run() {
         name:user.name,
         phone:user.phone
       }
-      const exists = await newOrderCollection.findOne(query);
+      const exists = await userCollection.findOne(query);
       if(exists){
         return res.send({ success: false, user: exists });
       }
@@ -57,9 +57,20 @@ async function run() {
       
     });
 
+    app.put('/user',async(req,res)=>{
+      const user = req.body;
+      const filter = {email:user.email};
+      const options = {upsert:true};
+      const updateDoc = {
+        $set: user,
+      };
+      const result = await userCollection.updateOne(filter, updateDoc, options);
+      res.send({success:result});
+    })
+
     app.get('/users',async(req,res)=>{
       const result = await userCollection.find().toArray();
-      res.send(result);
+      res.send({result});
     });
 
     app.get('/purchase',async(req,res)=>{
