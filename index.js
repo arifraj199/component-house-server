@@ -4,6 +4,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5000;
+var jwt = require("jsonwebtoken");
 
 //necessary middleware
 app.use(cors());
@@ -15,6 +16,22 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
+
+
+function verifyJWT(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ message: "Unauthorized access" });
+  }
+  const token = authHeader.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+    if (err) {
+      return res.status(403).send({ message: "Forbidden access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
 
 async function run() {
   try {
@@ -35,7 +52,7 @@ async function run() {
       res.send(result);
     });
 
-    app.post('/users',async(req,res)=>{
+    app.post('/users',verifyJWT,async(req,res)=>{
       const user = req.body;
       // const email = req.query.email;
       const query = {
@@ -57,13 +74,29 @@ async function run() {
       
     });
 
-    app.get('/users',async(req,res)=>{
+    app.get('/users',verifyJWT,async(req,res)=>{
       const result = await userCollection.find().toArray();
       res.send(result); 
     });
 
 
-    app.put('/user',async(req,res)=>{
+    app.put('/user/:email',async(req,res)=>{
+      const email = req.params.email;
+      const user = req.body;
+      const filter = {email:email};
+      const options = {upsert:true};
+      const updateDoc = {
+        $set: user,
+      };
+      const result = await userCollection.updateOne(filter, updateDoc, options);
+      const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN, {
+        expiresIn: "1h",
+      });
+      res.send({result,token});
+    });
+
+
+    app.put('/user',verifyJWT,async(req,res)=>{
       const user = req.body;
       const filter = {email:user.email};
       const options = {upsert:true};
@@ -71,11 +104,12 @@ async function run() {
         $set: user,
       };
       const result = await userCollection.updateOne(filter, updateDoc, options);
-      res.send({success:result});
+      
+      res.send(result);
     });
 
 
-    app.get('/user',async(req,res)=>{
+    app.get('/user',verifyJWT,async(req,res)=>{
       const email = req.query.email;
       const query = {email:email};
       const result = await userCollection.find(query).toArray();
@@ -83,27 +117,27 @@ async function run() {
     })
 
    
-    app.get('/purchase',async(req,res)=>{
+    app.get('/purchase',verifyJWT,async(req,res)=>{
       const email = req.query.email;
       const filter = {email:email};
       const result = await newOrderCollection.find(filter).toArray();
       res.send(result);
     })
 
-    app.get("/purchase/:id", async (req, res) => {
+    app.get("/purchase/:id",verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await componentCollection.findOne(query);
       res.send(result);
     });
 
-    app.post("/purchase", async (req, res) => {
+    app.post("/purchase",verifyJWT, async (req, res) => {
         const myOrder = req.body;
         const result = await newOrderCollection.insertOne(myOrder);
         res.send({success:result});
       });
 
-    app.put("/purchase/:id", async (req, res) => {
+    app.put("/purchase/:id",verifyJWT, async (req, res) => {
       const id = req.params.id;
       const updateQuantity = req.body;
       const filter = { _id: ObjectId(id) };
@@ -121,7 +155,7 @@ async function run() {
       res.send({success:result});
     });
 
-    app.delete('/purchase/:id',async(req,res)=>{
+    app.delete('/purchase/:id',verifyJWT,async(req,res)=>{
       const id = req.params.id;
       const query = {_id:ObjectId(id)};
       const result = await newOrderCollection.deleteOne(query);
