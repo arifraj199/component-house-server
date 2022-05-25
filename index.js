@@ -57,6 +57,12 @@ async function run() {
       
     });
 
+    app.get('/users',async(req,res)=>{
+      const result = await userCollection.find().toArray();
+      res.send(result); 
+    });
+
+
     app.put('/user',async(req,res)=>{
       const user = req.body;
       const filter = {email:user.email};
@@ -66,13 +72,17 @@ async function run() {
       };
       const result = await userCollection.updateOne(filter, updateDoc, options);
       res.send({success:result});
-    })
-
-    app.get('/users',async(req,res)=>{
-      const result = await userCollection.find().toArray();
-      res.send({result});
     });
 
+
+    app.get('/user',async(req,res)=>{
+      const email = req.query.email;
+      const query = {email:email};
+      const result = await userCollection.find(query).toArray();
+      res.send(result);
+    })
+
+   
     app.get('/purchase',async(req,res)=>{
       const email = req.query.email;
       const filter = {email:email};
