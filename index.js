@@ -96,6 +96,30 @@ async function run() {
       res.send(result);
     });
 
+    app.post("/component",verifyJWT,verifyAdmin, async(req,res)=>{
+      const component = req.body;
+      const result = await componentCollection.insertOne(component);
+      res.send(result);
+    });
+
+    app.put('/update/:id',verifyJWT,verifyAdmin,async(req,res)=>{
+      const id = req.params.id;
+      const updateQuantity = req.body;
+      const filter = {_id:ObjectId(id)};
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          available_quantity: updateQuantity.available_quantity,
+        },
+      };
+      const result = await componentCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+      res.send(result);
+    })
+
     app.post("/users", verifyJWT, async (req, res) => {
       const user = req.body;
       // const email = req.query.email;
