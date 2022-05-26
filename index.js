@@ -108,6 +108,11 @@ async function run() {
       res.send(result);
     });
 
+    app.get('/review',async(req,res)=>{
+      const result = await reviewCollection.find().toArray();
+      res.send(result);
+    })
+
     app.put('/update/:id',verifyJWT,verifyAdmin,async(req,res)=>{
       const id = req.params.id;
       const updateQuantity = req.body;
@@ -264,6 +269,13 @@ async function run() {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await newOrderCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    app.delete("/user/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await userCollection.deleteOne(query);
       res.send(result);
     });
   } finally {
