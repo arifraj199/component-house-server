@@ -43,6 +43,7 @@ async function run() {
       .db("computerComponent")
       .collection("newOrder");
     const userCollection = client.db("computerComponent").collection("user");
+    const reviewCollection = client.db("computerComponent").collection("review");
     const paymentCollection = client
       .db("componentPayment")
       .collection("payments");
@@ -99,6 +100,11 @@ async function run() {
     app.post("/component",verifyJWT,verifyAdmin, async(req,res)=>{
       const component = req.body;
       const result = await componentCollection.insertOne(component);
+      res.send(result);
+    });
+    app.post("/review",verifyJWT, async(req,res)=>{
+      const review = req.body;
+      const result = await reviewCollection.insertOne(review);
       res.send(result);
     });
 
@@ -165,7 +171,8 @@ async function run() {
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
       const user = req.body;
-      const filter = { email: email };
+      const name = user.name;
+      const filter = { email: email,name:name };
       const options = { upsert: true };
       const updateDoc = {
         $set: user,
